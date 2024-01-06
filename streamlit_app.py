@@ -1,42 +1,39 @@
 import streamlit as st
 import openai
 
-# Configuración de Streamlit
-st.title("Generador de Citas Filosóficas")
-st.write("Ingrese un tema y obtendrá diez citas de filósofos relacionadas")
+# Configurar la API key de OpenAI
+openai.api_key = st.text_input("Ingresa tu API key de OpenAI:")
 
-# Configuración de OpenAI ChatGPT
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-model = "gpt-3.5-turbo"
-
-# Función para generar citas
-def generar_citas(tema, num_citas):
-    prompt = f"Generar {num_citas} citas de filósofos sobre '{tema}'"
+def obtener_citas_filosofos(tema):
+    # Conversación con el modelo chatgpt-3.5
     response = openai.Completion.create(
-        engine=model,
-        prompt=prompt,
+        engine="text-davinci-003",
+        prompt=f"Obtener diez citas de filósofos sobre {tema}.",
         max_tokens=100,
-        n = num_citas,
+        n=10,
         stop=None,
         temperature=0.7,
-        top_p=1.0,
-        frequency_penalty=0.0,
-        presence_penalty=0.0
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
     )
-    citas = [choice['text'].strip() for choice in response['choices']]
+    
+    # Obtener las respuestas del modelo
+    citas = response.choices[0]['text'].split("\n")
+    
     return citas
 
-# Interfaz de usuario
-tema = st.text_input("Ingrese un tema:")
-num_citas = st.slider("Número de citas", 1, 10, 5)
+# Interfaz de la aplicación con Streamlit
+st.title("Citas de Filósofos")
+tema = st.text_input("Ingresa un tema:")
 
-if st.button("Generar Citas"):
+if st.button("Obtener citas"):
     if tema:
-        with st.spinner("Generando citas..."):
-            citas = generar_citas(tema, num_citas)
-        st.success("¡Citas generadas!")
+        st.info("Obteniendo citas de filósofos...")
+        citas = obtener_citas_filosofos(tema)
+        st.success("¡Citas obtenidas!")
         for i, cita in enumerate(citas):
-            st.write(f"{i+1}. {cita}")
+            st.markdown(f"**Cita {i+1}:** {cita}")
     else:
-        st.warning("Por favor, ingrese un tema")
+        st.warning("Por favor, ingresa un tema.")
 
