@@ -1,44 +1,42 @@
 import streamlit as st
-import random
+import openai
 
-# Dictionary of quotes grouped by topics
-quote_database = {
-    "Wisdom": [
-        "The only true wisdom is in knowing you know nothing. - Socrates",
-        "Knowing yourself is the beginning of all wisdom. - Aristotle",
-        "The unexamined life is not worth living. - Socrates"
-    ],
-    "Happiness": [
-        "Happiness is the highest good. - Aristotle",
-        "Happiness is the meaning and purpose of life. - Albert Camus"
-    ],
-    "Knowledge": [
-        "Knowledge is power. - Francis Bacon",
-        "The fool doth think he is wise, but the wise man knows himself to be a fool. - William Shakespeare"
-    ]
-}
+# Configuración de Streamlit
+st.title("Generador de Citas Filosóficas")
+st.write("Ingrese un tema y obtendrá diez citas de filósofos relacionadas")
 
-def get_quotes(topic):
-    if topic in quote_database:
-        return quote_database[topic]
+# Configuración de OpenAI ChatGPT
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+model = "gpt-3.5-turbo"
+
+# Función para generar citas
+def generar_citas(tema, num_citas):
+    prompt = f"Generar {num_citas} citas de filósofos sobre '{tema}'"
+    response = openai.Completion.create(
+        engine=model,
+        prompt=prompt,
+        max_tokens=100,
+        n = num_citas,
+        stop=None,
+        temperature=0.7,
+        top_p=1.0,
+        frequency_penalty=0.0,
+        presence_penalty=0.0
+    )
+    citas = [choice['text'].strip() for choice in response['choices']]
+    return citas
+
+# Interfaz de usuario
+tema = st.text_input("Ingrese un tema:")
+num_citas = st.slider("Número de citas", 1, 10, 5)
+
+if st.button("Generar Citas"):
+    if tema:
+        with st.spinner("Generando citas..."):
+            citas = generar_citas(tema, num_citas)
+        st.success("¡Citas generadas!")
+        for i, cita in enumerate(citas):
+            st.write(f"{i+1}. {cita}")
     else:
-        return []
+        st.warning("Por favor, ingrese un tema")
 
-# Streamlit app
-def main():
-    st.title("Philosopher Quotes")
-    
-    topics = list(quote_database.keys())
-    selected_topic = st.selectbox("Select a topic", topics)
-    
-    if st.button("Generate Quotes"):
-        quotes = get_quotes(selected_topic)
-        if len(quotes) > 0:
-            selected_quotes = random.sample(quotes, 10)
-            for quote in selected_quotes:
-                st.write("- " + quote)
-        else:
-            st.write("No quotes found for the selected topic.")
-
-if __name__ == "__main__":
-    main()
